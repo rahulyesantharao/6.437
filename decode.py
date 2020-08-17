@@ -1,9 +1,49 @@
-import decode_no_breakpoint
-import decode_breakpoint
+d = None
+
+# Full run of metropolis-hastings, to convergence
+def metropolis_hastings():
+    # initial choice
+    inv_perm = d.initial_guess()
+
+    # Run the MC to convergence
+    last_change = 0
+    for i in range(10000):
+        changed = d.metropolis_hastings_step(inv_perm)
+
+        # update the counter for convergence
+        if changed:
+            last_change = i
+
+        # if we've converged, break
+        if i - last_change == 1000:
+            break
+    return inv_perm
 
 
 def decode(ciphertext, has_breakpoint):
+    # import appropriately
+    global d
+
     if has_breakpoint:
-        return decode_breakpoint.decode(ciphertext)
+        import decode_breakpoint as de
     else:
-        return decode_no_breakpoint.decode(ciphertext)
+        import decode_no_breakpoint as de
+
+    d = de
+
+    # The actual decode logic
+    d.populate_globals(ciphertext)
+
+    # 10 independent runs, choose highest likelihood
+    best_perm = None
+    best_log_likelihood = None
+    for i in range(10):
+        inv_perm = metropolis_hastings()
+        cur_log_likelihood = d.log_likelihood(inv_perm)
+        if best_log_likelihood is None or cur_log_likelihood > best_log_likelihood:
+            best_perm = inv_perm
+            best_log_likelihood = cur_log_likelihood
+
+    # Use the result to decode the text
+    plaintext = d.decode_with_perm(best_perm)
+    return plaintext
