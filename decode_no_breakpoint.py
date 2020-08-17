@@ -70,6 +70,7 @@ def apply_proposal(inv_perm, pair):
 
 
 def acceptance_helper(x, y, inv_perm):
+    # Can probably be optimized with numpy tricks (e.g. concatenate arrays and only do one np.dot)
     global ALPHABET_LOG_TRANSITION, ALPHABET_LOG_TRANSITION_T, CIPHER_TRANSITION_COUNTS, CIPHER_TRANSITION_COUNTS_T
     inv_x = inv_perm[x]
     inv_y = inv_perm[y]
@@ -146,7 +147,7 @@ def log_likelihood(inv_perm):
     return ret
 
 
-def decode(ciphertext, has_breakpoint):
+def decode(ciphertext):
     populate_globals(ciphertext)
 
     best_perm = None
