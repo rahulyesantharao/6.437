@@ -69,21 +69,8 @@ def apply_proposal(inv_perm, pair):
     inv_perm[x], inv_perm[y] = inv_perm[y], inv_perm[x]
 
 
-# A function that is proportional to the a posteriori distribution of the cipher, given the text
-def post(perm):
-    global alpha_prior, alpha_transition, cipherindices
-    inv_perm = inverse_permutation(perm)
-    ret = alpha_prior[inv_perm[cipherindices[0]]]
-    for i in range(len(cipherindices) - 1):
-        to = inv_perm[cipherindices[i + 1]]
-        fro = inv_perm[cipherindices[i]]
-        ret *= alpha_transition[to, fro]
-    return ret
-
-
 def acceptance_helper(x, y, inv_perm):
     global ALPHABET_LOG_TRANSITION, ALPHABET_LOG_TRANSITION_T, CIPHER_TRANSITION_COUNTS, CIPHER_TRANSITION_COUNTS_T
-    # return np.sum(CIPHER_TRANSITION_COUNTS * ALPHABET_LOG_TRANSITION)
     inv_x = inv_perm[x]
     inv_y = inv_perm[y]
     return (
