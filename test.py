@@ -112,8 +112,8 @@ def main():
         )
         exit(-1)
 
-    print("Creating an upload.zip that you can submit...")
-    subprocess.call(["zip", "-rq", "upload.zip"] + sorted(os.listdir(".")))
+    # print("Creating an upload.zip that you can submit...")
+    # subprocess.call(["zip", "-rq", "upload.zip"] + sorted(os.listdir(".")))
 
 
 if __name__ == "__main__":
