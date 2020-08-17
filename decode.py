@@ -25,7 +25,8 @@ def populate_globals(ciphertext):
 
     def np_load(name):
         with open(name) as f:
-            ret = np.log(np.loadtxt(f, delimiter=","))
+            with np.errstate(divide="ignore"):
+                ret = np.log(np.loadtxt(f, delimiter=","))
         ret[np.isneginf(ret)] = -20
         return ret
 
