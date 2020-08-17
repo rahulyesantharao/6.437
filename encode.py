@@ -30,15 +30,13 @@ LETTER_TO_IDX = dict(map(reversed, enumerate(ALPHABET)))
 
 def clean_text(text):
     # try and approximate unicode with ascii
-    text = unicodedata.normalize("NFKD", text).encode("ascii",
-                                                      "ignore").decode()
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
 
     text = text.lower()  # make lowercase
     text = text.replace("?", ".").replace("!", ".")
     for c in "/-\n\r":
         text = text.replace(c, " ")
-    text = "".join(filter(ALPHABET.__contains__,
-                          text))  # filter to alphabet chars
+    text = "".join(filter(ALPHABET.__contains__, text))  # filter to alphabet chars
 
     text = text.lstrip(" .")  # filter out leading spaces and periods
     if text == "":
@@ -76,7 +74,7 @@ def encode_with_breakpoint(plaintext):
 def main():
     plaintext_out = sys.argv[1]
     ciphertext_out = sys.argv[2]
-    has_breakpoint = (sys.argv[3].lower() == "true")
+    has_breakpoint = sys.argv[3].lower() == "true"
     if len(sys.argv) > 4:
         random.seed(sys.argv[4])
 

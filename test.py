@@ -19,9 +19,9 @@ def get_num_corrrect(a, b):
     if len(a) != len(b):
         logging.error("Comparison Error: Strings must have the same length")
         logging.error("First string:")
-        logging.error(f"\"{a}\"")
+        logging.error(f'"{a}"')
         logging.error("Second string:")
-        logging.error(f"\"{b}\"")
+        logging.error(f'"{b}"')
         raise ComparisonError()
     # Return the number of locations where the two strings are equal
     return sum(int(i == j) for i, j in zip(a, b))
@@ -35,12 +35,11 @@ def test(executable_path, plaintext, ciphertext, breakpoint):
         logging.error("decode-cli does not exist")
         raise EnvironmentError("decode-cli does not exist")
 
-    subprocess.call(["chmod", "+x",
-                     executable_path])  # Ensure executable can be executed
-    executable_file = os.path.basename(
-        executable_path)  # foo/bar/decode -> decode
-    executable_dir = os.path.dirname(
-        executable_path)  # foo/bar/decode -> foo/bar
+    subprocess.call(
+        ["chmod", "+x", executable_path]
+    )  # Ensure executable can be executed
+    executable_file = os.path.basename(executable_path)  # foo/bar/decode -> decode
+    executable_dir = os.path.dirname(executable_path)  # foo/bar/decode -> foo/bar
 
     start_dir = os.getcwd()
     os.chdir(
@@ -50,10 +49,10 @@ def test(executable_path, plaintext, ciphertext, breakpoint):
     try:
         start_time = time.time()
         output = subprocess.check_output(
-            ["./" + executable_file, ciphertext,
-             str(breakpoint)],
+            ["./" + executable_file, ciphertext, str(breakpoint)],
             stderr=subprocess.STDOUT,
-            encoding="UTF-8").strip("\r\n")
+            encoding="UTF-8",
+        ).strip("\r\n")
         end_time = time.time()
     except subprocess.CalledProcessError as e:
         os.chdir(start_dir)  ###### CHANGE BACK TO ORIGINAL DIRECTORY
@@ -81,20 +80,19 @@ def main():
     executable = "./decode-cli"
     plaintext = first_line("data/test/short_plaintext.txt")
     ciphertext = first_line("data/test/short_ciphertext.txt")
-    ciphertext_with_breakpoint = first_line(
-        "data/test/short_ciphertext_breakpoint.txt")
+    ciphertext_with_breakpoint = first_line("data/test/short_ciphertext_breakpoint.txt")
     dummy_text = "the quick brown fox jumped over the lazy dog."
 
     try:
         print("Running no breakpoint test...")
-        elapsed_time, num_correct, _ = test(executable, plaintext, ciphertext,
-                                            False)
+        elapsed_time, num_correct, _ = test(executable, plaintext, ciphertext, False)
         print(f"Score (no breakpoint): {num_correct} out of {len(plaintext)}")
         print(f"Elapsed time (no breakpoint): {elapsed_time}")
 
         print("Running breakpoint test...")
-        elapsed_time, num_correct, _ = test(executable, plaintext,
-                                            ciphertext_with_breakpoint, True)
+        elapsed_time, num_correct, _ = test(
+            executable, plaintext, ciphertext_with_breakpoint, True
+        )
         print(f"Score (breakpoint): {num_correct} out of {len(plaintext)}")
         print(f"Elapsed time (breakpoint): {elapsed_time}")
 
@@ -108,8 +106,10 @@ def main():
     except:
         print(traceback.format_exc())
         print("!!! ERROR !!!")
-        print("Your code seems to have errors.",
-              "Please fix them and then rerun this test.")
+        print(
+            "Your code seems to have errors.",
+            "Please fix them and then rerun this test.",
+        )
         exit(-1)
 
     print("Creating an upload.zip that you can submit...")
