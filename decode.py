@@ -10,6 +10,11 @@ CIPHER_TRANSITION_COUNTS = None
 CIPHER_TRANSITION_COUNTS_T = None
 
 
+def print_perm(inv_perm):
+    for i in range(len(inv_perm)):
+        print(f"{ALPHABET[i]} -> {ALPHABET[inv_perm[i]]}")
+
+
 # Read in data from the data files
 def populate_globals(ciphertext):
     global ALPHABET, ALPHABET_LOG_PROB, ALPHABET_LOG_TRANSITION, ALPHABET_LOG_TRANSITION_T, CIPHER_INDICES, CIPHER_TRANSITION_COUNTS, CIPHER_TRANSITION_COUNTS_T
@@ -33,7 +38,7 @@ def populate_globals(ciphertext):
         global ALPHABET, CIPHER_INDICES
         ret = np.zeros((len(ALPHABET), len(ALPHABET)))
         for i in range(len(CIPHER_INDICES) - 1):
-            ret[CIPHER_INDICES[i], CIPHER_INDICES[i + 1]] += 1
+            ret[CIPHER_INDICES[i + 1], CIPHER_INDICES[i]] += 1
         return ret
 
     ALPHABET = read_line("data/alphabet.csv")
@@ -75,17 +80,24 @@ def post(perm):
     return ret
 
 
-def acceptance_helper(x, y, inv_x, inv_y):
+def acceptance_helper(x, y, inv_perm):
     global ALPHABET_LOG_TRANSITION, ALPHABET_LOG_TRANSITION_T, CIPHER_TRANSITION_COUNTS, CIPHER_TRANSITION_COUNTS_T
+    # return np.sum(CIPHER_TRANSITION_COUNTS * ALPHABET_LOG_TRANSITION)
+    inv_x = inv_perm[x]
+    inv_y = inv_perm[y]
     return (
-        np.dot(CIPHER_TRANSITION_COUNTS[x], ALPHABET_LOG_TRANSITION[inv_x])
-        + np.dot(CIPHER_TRANSITION_COUNTS_T[x], ALPHABET_LOG_TRANSITION_T[inv_x])
-        + np.dot(CIPHER_TRANSITION_COUNTS[y], ALPHABET_LOG_TRANSITION[inv_y])
-        + np.dot(CIPHER_TRANSITION_COUNTS_T[y], ALPHABET_LOG_TRANSITION_T[inv_y])
+        np.dot(CIPHER_TRANSITION_COUNTS[x], ALPHABET_LOG_TRANSITION[inv_x][inv_perm])
+        + np.dot(
+            CIPHER_TRANSITION_COUNTS_T[x], ALPHABET_LOG_TRANSITION_T[inv_x][inv_perm]
+        )
+        + np.dot(CIPHER_TRANSITION_COUNTS[y], ALPHABET_LOG_TRANSITION[inv_y][inv_perm])
+        + np.dot(
+            CIPHER_TRANSITION_COUNTS_T[y], ALPHABET_LOG_TRANSITION_T[inv_y][inv_perm]
+        )
         - (CIPHER_TRANSITION_COUNTS[x, x] * ALPHABET_LOG_TRANSITION[inv_x, inv_x])
-        - (CIPHER_TRANSITION_COUNTS[x, y] * ALPHABET_LOG_TRANSITION[inv_x, inv_y])
-        - (CIPHER_TRANSITION_COUNTS[y, y] * ALPHABET_LOG_TRANSITION[inv_y, inv_y])
         - (CIPHER_TRANSITION_COUNTS[y, x] * ALPHABET_LOG_TRANSITION[inv_y, inv_x])
+        - (CIPHER_TRANSITION_COUNTS[y, y] * ALPHABET_LOG_TRANSITION[inv_y, inv_y])
+        - (CIPHER_TRANSITION_COUNTS[x, y] * ALPHABET_LOG_TRANSITION[inv_x, inv_y])
     )
 
 
@@ -94,18 +106,13 @@ def acceptance_probability(pair, inv_perm):
     global ALPHABET_LOG_PROB
     x, y = pair
 
-    cand_el0 = inv_perm[CIPHER_INDICES[0]]
-    if CIPHER_INDICES[0] == x:
-        cand_el0 = inv_perm[y]
-    elif CIPHER_INDICES[0] == y:
-        cand_el0 = inv_perm[x]
+    apply_proposal(inv_perm, pair)
+    numerator = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
+    numerator += acceptance_helper(x, y, inv_perm)
 
-    numerator = ALPHABET_LOG_PROB[cand_el0] - acceptance_helper(
-        x, y, inv_perm[y], inv_perm[x]
-    )
-    denominator = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]] - acceptance_helper(
-        x, y, inv_perm[x], inv_perm[y]
-    )
+    apply_proposal(inv_perm, pair)
+    denominator = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
+    denominator += acceptance_helper(x, y, inv_perm)
 
     return numerator - denominator
 
@@ -142,7 +149,7 @@ def decode(ciphertext, has_breakpoint):
             break
 
     # Use the result to decode the text
-    print(last_change)
-    print(inv_perm)
+    # print(i, last_change)
+    # print_perm(inv_perm)
     plaintext = decode_with_perm(inv_perm)
     return plaintext
