@@ -130,9 +130,8 @@ def metropolis_hastings_step(inv_perm):
         return False
 
 
-def decode(ciphertext, has_breakpoint):
-    populate_globals(ciphertext)
-
+# Full run of metropolis-hastings, to convergence
+def metropolis_hastings():
     # initial choice
     inv_perm = np.random.permutation(len(ALPHABET))
 
@@ -148,9 +147,33 @@ def decode(ciphertext, has_breakpoint):
         # if we've converged, break
         if i - last_change == 1000:
             break
+    return inv_perm
 
-    # Use the result to decode the text
+
+def log_likelihood(inv_perm):
+    ret = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
+    for i in range(ALPHABET_LOG_TRANSITION.shape[0]):
+        ret += np.dot(
+            CIPHER_TRANSITION_COUNTS[i], ALPHABET_LOG_TRANSITION[inv_perm[i]][inv_perm]
+        )
+    return ret
+
+
+def decode(ciphertext, has_breakpoint):
+    populate_globals(ciphertext)
+
+    best_perm = None
+    best_log_likelihood = None
+    for i in range(10):
+        inv_perm = metropolis_hastings()
+        cur_log_likelihood = log_likelihood(inv_perm)
+        if best_log_likelihood is None or cur_log_likelihood > best_log_likelihood:
+            best_perm = inv_perm
+            best_log_likelihood = cur_log_likelihood
+
     # print(i, last_change)
     # print_perm(inv_perm)
-    plaintext = decode_with_perm(inv_perm)
+
+    # Use the result to decode the text
+    plaintext = decode_with_perm(best_perm)
     return plaintext
