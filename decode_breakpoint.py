@@ -44,12 +44,20 @@ def decode_with_fn(f):
 
 # Metropolis-Hastings --------------------------------------------------------------------------
 # Returns transitions to the next state
+GAUSSIAN_SPREAD = 20
+
+
 def generate_proposal():
     return (
         np.random.choice(len(ALPHABET), 2, replace=False),
-        np.random.choice([-1, 0, 1]),
+        int(np.random.normal(scale=GAUSSIAN_SPREAD)),
         np.random.choice(len(ALPHABET), 2, replace=False),
     )
+
+
+def gaussian(x):
+    scalar = 1 / np.sqrt(2 * np.pi * GAUSSIAN_SPREAD ** 2)
+    return scalar * (np.exp(-np.power(x, 2) / (2 * np.power(GAUSSIAN_SPREAD, 2))))
 
 
 # Applies the step given by [step] to [f] (in place)
@@ -82,7 +90,7 @@ def acceptance_probability(step, f):
 def initial_guess():
     return [
         np.random.permutation(len(ALPHABET)),
-        np.random.randint(1, CIPHER_INDICES.shape[0]),
+        np.random.randint(1, CIPHER_INDICES.shape[0]),  # CIPHER_INDICES.shape[0] // 2
         np.random.permutation(len(ALPHABET)),
     ]
 
@@ -90,7 +98,7 @@ def initial_guess():
 def log_likelihood(f):
     inv_perm1, bp, inv_perm2 = f
 
-    if bp == 0 or bp == CIPHER_INDICES.shape[0]:
+    if bp <= 0 or bp >= CIPHER_INDICES.shape[0]:
         return -np.inf
 
     ret = ALPHABET_LOG_PROB[inv_perm1[CIPHER_INDICES[0]]]
@@ -101,7 +109,7 @@ def log_likelihood(f):
 
     ret += np.sum(
         ALPHABET_LOG_TRANSITION[
-            inv_perm1[CIPHER_INDICES[1:bp]], inv_perm1[CIPHER_INDICES[0 : bp - 1]]
+            inv_perm1[CIPHER_INDICES[1:bp]], inv_perm1[CIPHER_INDICES[: bp - 1]]
         ]
     )
 
