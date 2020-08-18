@@ -38,7 +38,7 @@ def metropolis_hastings(has_breakpoint):
 
         # if we've converged, break
         if i - last_change == convergence_len:
-            print("Converged")
+            # print("Converged")
             break
 
     if has_breakpoint:
@@ -72,6 +72,6 @@ def decode(ciphertext, has_breakpoint):
             best_log_likelihood = cur_log_likelihood
 
     # Use the result to decode the text
-    print(best_perm)
+    # print(best_perm)
     plaintext = d.decode_with_fn(best_perm)
     return plaintext
