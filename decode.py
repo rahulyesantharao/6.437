@@ -1,4 +1,18 @@
+import numpy as np
+
 d = None
+
+# Run one step of the Metropolis-Hastings algorithm
+def metropolis_hastings_step(inv_perm):
+    step = d.generate_proposal()
+    a = min(d.acceptance_probability(step, inv_perm), 0)
+    u = np.random.uniform()
+    if u < np.exp(a):
+        d.apply_proposal(inv_perm, step)
+        return True
+    else:
+        return False
+
 
 # Full run of metropolis-hastings, to convergence
 def metropolis_hastings():
@@ -8,7 +22,7 @@ def metropolis_hastings():
     # Run the MC to convergence
     last_change = 0
     for i in range(10000):
-        changed = d.metropolis_hastings_step(inv_perm)
+        changed = metropolis_hastings_step(inv_perm)
 
         # update the counter for convergence
         if changed:

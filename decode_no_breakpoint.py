@@ -106,18 +106,6 @@ def acceptance_probability(pair, inv_perm):
     return numerator - denominator
 
 
-# Run one step of the Metropolis-Hastings algorithm
-def metropolis_hastings_step(inv_perm):
-    pair = generate_proposal()
-    a = min(acceptance_probability(pair, inv_perm), 0)
-    u = np.random.uniform()
-    if u < np.exp(a):
-        apply_proposal(inv_perm, pair)
-        return True
-    else:
-        return False
-
-
 def initial_guess():
     return np.random.permutation(len(ALPHABET))
 
