@@ -36,7 +36,7 @@ def populate_globals(ciphertext):
 # Decode the global cipher indices using a given inverse permutation
 def decode_with_fn(f):
     global CIPHER_INDICES
-    inv_perm1, bp, inv_perm2 = f
+    inv_perm1, inv_perm2, bp = f
     return "".join(ALPHABET[inv_perm1[i]] for i in CIPHER_INDICES[:bp]) + "".join(
         ALPHABET[inv_perm2[i]] for i in CIPHER_INDICES[bp:]
     )
@@ -50,8 +50,10 @@ GAUSSIAN_SPREAD = 20
 def generate_proposal():
     return (
         np.random.choice(len(ALPHABET), 2, replace=False),
-        int(np.random.normal(scale=GAUSSIAN_SPREAD)),
         np.random.choice(len(ALPHABET), 2, replace=False),
+        np.random.choice(
+            [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+        ),  # int(np.random.normal(scale=GAUSSIAN_SPREAD)),
     )
 
 
@@ -61,28 +63,38 @@ def gaussian(x):
 
 
 # Applies the step given by [step] to [f] (in place)
-def apply_proposal(f, step):
-    (x1, y1), bp_diff, (x2, y2) = step
-    inv_perm1, _, inv_perm2 = f
+def apply_proposal(f, step, num):
+    (x1, y1), (x2, y2), bp_diff = step
+    inv_perm1, inv_perm2, _ = f
 
-    inv_perm1[x1], inv_perm1[y1] = inv_perm1[y1], inv_perm1[x1]
-    f[1] += bp_diff
-    inv_perm2[x2], inv_perm2[y2] = inv_perm2[y2], inv_perm2[x2]
-
-
-def unapply_proposal(f, step):
-    (x1, y1), bp_diff, (x2, y2) = step
-    inv_perm1, _, inv_perm2 = f
-
-    inv_perm1[x1], inv_perm1[y1] = inv_perm1[y1], inv_perm1[x1]
-    f[1] -= bp_diff
-    inv_perm2[x2], inv_perm2[y2] = inv_perm2[y2], inv_perm2[x2]
+    if num == 0:
+        inv_perm1[x1], inv_perm1[y1] = inv_perm1[y1], inv_perm1[x1]
+    elif num == 1:
+        inv_perm2[x2], inv_perm2[y2] = inv_perm2[y2], inv_perm2[x2]
+    elif num == 2:
+        f[2] += bp_diff
+    else:
+        raise IndexError
 
 
-def acceptance_probability(step, f):
-    apply_proposal(f, step)
+def unapply_proposal(f, step, num):
+    (x1, y1), (x2, y2), bp_diff = step
+    inv_perm1, inv_perm2, _ = f
+
+    if num == 0:
+        inv_perm1[x1], inv_perm1[y1] = inv_perm1[y1], inv_perm1[x1]
+    elif num == 1:
+        inv_perm2[x2], inv_perm2[y2] = inv_perm2[y2], inv_perm2[x2]
+    elif num == 2:
+        f[2] -= bp_diff
+    else:
+        raise IndexError
+
+
+def acceptance_probability(step, f, num):
+    apply_proposal(f, step, num)
     numerator = log_likelihood(f)
-    unapply_proposal(f, step)
+    unapply_proposal(f, step, num)
     denominator = log_likelihood(f)
     return numerator - denominator
 
@@ -90,13 +102,13 @@ def acceptance_probability(step, f):
 def initial_guess():
     return [
         np.random.permutation(len(ALPHABET)),
-        np.random.randint(1, CIPHER_INDICES.shape[0]),  # CIPHER_INDICES.shape[0] // 2
         np.random.permutation(len(ALPHABET)),
+        np.random.randint(1, CIPHER_INDICES.shape[0]),  # CIPHER_INDICES.shape[0] // 2
     ]
 
 
 def log_likelihood(f):
-    inv_perm1, bp, inv_perm2 = f
+    inv_perm1, inv_perm2, bp = f
 
     if bp <= 0 or bp >= CIPHER_INDICES.shape[0]:
         return -np.inf

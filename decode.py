@@ -3,15 +3,19 @@ import numpy as np
 d = None
 
 # Run one step of the Metropolis-Hastings algorithm
-def metropolis_hastings_step(inv_perm):
+# Structured like a Gibb's Sampler: updates one field of the state at a time, conditionally
+def metropolis_hastings_step(f):
     step = d.generate_proposal()
-    a = min(d.acceptance_probability(step, inv_perm), 0)
-    u = np.random.uniform()
-    if u < np.exp(a):
-        d.apply_proposal(inv_perm, step)
-        return True
-    else:
-        return False
+
+    changed = False
+    for i in range(len(f)):
+        a = min(d.acceptance_probability(step, f, i), 0)
+        u = np.random.uniform()
+        if u < np.exp(a):
+            d.apply_proposal(f, step, i)
+            changed = True
+
+    return changed
 
 
 # Full run of metropolis-hastings, to convergence
@@ -19,13 +23,13 @@ def metropolis_hastings(has_breakpoint):
     # initial choice
     f = d.initial_guess()
 
-    convergence_len = 10000 if has_breakpoint else 1000
+    convergence_len = 2000 if has_breakpoint else 1000
 
     # Run the MC to convergence
     last_change = 0
     best_f = f
     best_log_likelihood = d.log_likelihood(f)
-    for i in range(100000):
+    for i in range(10000):
         changed = metropolis_hastings_step(f)
 
         # update the counter for convergence
@@ -64,7 +68,7 @@ def decode(ciphertext, has_breakpoint):
     # 10 independent runs, choose highest likelihood
     best_perm = None
     best_log_likelihood = None
-    for i in range(20):
+    for i in range(10):
         inv_perm = metropolis_hastings(has_breakpoint)
         cur_log_likelihood = d.log_likelihood(inv_perm)
         if best_log_likelihood is None or cur_log_likelihood > best_log_likelihood:

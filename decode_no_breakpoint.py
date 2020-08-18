@@ -52,8 +52,9 @@ def populate_globals(ciphertext):
 
 
 # Decode the global cipher indices using a given inverse permutation
-def decode_with_fn(inv_perm):
+def decode_with_fn(f):
     global CIPHER_INDICES
+    inv_perm = f[0]
     return "".join(ALPHABET[inv_perm[i]] for i in CIPHER_INDICES)
 
 
@@ -64,8 +65,9 @@ def generate_proposal():
 
 
 # Applies the permutation given by [pair] to [inv_perm] (in place)
-def apply_proposal(inv_perm, pair):
+def apply_proposal(inv_perm, pair, num):
     x, y = pair
+    inv_perm = inv_perm[0]
     inv_perm[x], inv_perm[y] = inv_perm[y], inv_perm[x]
 
 
@@ -91,26 +93,27 @@ def acceptance_helper(x, y, inv_perm):
 
 
 # Return a(perm_cand | perm)
-def acceptance_probability(pair, inv_perm):
+def acceptance_probability(pair, inv_perm, num):
     global ALPHABET_LOG_PROB
     x, y = pair
 
-    apply_proposal(inv_perm, pair)
-    numerator = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
-    numerator += acceptance_helper(x, y, inv_perm)
+    apply_proposal(inv_perm, pair, num)
+    numerator = ALPHABET_LOG_PROB[inv_perm[0][CIPHER_INDICES[0]]]
+    numerator += acceptance_helper(x, y, inv_perm[0])
 
-    apply_proposal(inv_perm, pair)
-    denominator = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
-    denominator += acceptance_helper(x, y, inv_perm)
+    apply_proposal(inv_perm, pair, num)
+    denominator = ALPHABET_LOG_PROB[inv_perm[0][CIPHER_INDICES[0]]]
+    denominator += acceptance_helper(x, y, inv_perm[0])
 
     return numerator - denominator
 
 
 def initial_guess():
-    return np.random.permutation(len(ALPHABET))
+    return [np.random.permutation(len(ALPHABET))]
 
 
 def log_likelihood(inv_perm):
+    inv_perm = inv_perm[0]
     ret = ALPHABET_LOG_PROB[inv_perm[CIPHER_INDICES[0]]]
     for i in range(ALPHABET_LOG_TRANSITION.shape[0]):
         ret += np.dot(
