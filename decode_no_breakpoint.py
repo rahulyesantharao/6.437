@@ -52,7 +52,7 @@ def populate_globals(ciphertext):
 
 
 # Decode the global cipher indices using a given inverse permutation
-def decode_with_perm(inv_perm):
+def decode_with_fn(inv_perm):
     global CIPHER_INDICES
     return "".join(ALPHABET[inv_perm[i]] for i in CIPHER_INDICES)
 

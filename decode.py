@@ -59,5 +59,5 @@ def decode(ciphertext, has_breakpoint):
             best_log_likelihood = cur_log_likelihood
 
     # Use the result to decode the text
-    plaintext = d.decode_with_perm(best_perm)
+    plaintext = d.decode_with_fn(best_perm)
     return plaintext
